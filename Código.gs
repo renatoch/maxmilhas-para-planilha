@@ -1,4 +1,7 @@
 var ETICKETCOLUMN = 7;
+var ESTIMATEDRECEIVEDATECOLUMN = 5;
+var SALEVALUEPERMILECOLUMN = 3;
+var SALEVALUE = 4;
 
 function updateControlSpreadsheet() {
   var spreadSheetApp, gmailThreads,firstMessageSubject, firstMessage, firstMessagePlainBody, saleWasCancelled, sucessfulSale, i,
@@ -46,11 +49,14 @@ function updateControlSpreadsheet() {
           saleValuePerMile = getSaleValuePerMile(firstMessagePlainBody);
           boardingFee = getBoardingFee(firstMessagePlainBody);
           luggageFee = getLuggageFee(firstMessagePlainBody);
-          estimatedReceiveDate = formatDate(addDays(convertStringToDate(date), 20));
+          estimatedReceiveDate = Utilities.formatDate(addDays(convertStringToDate(date), 20), "America/Sao_Paulo", "dd/MM");
           
           //spreadSheetApp.appendRow([method, date, transactionCode, eTicket, account, airline, airmilesAmount, saleValue, saleValuePerMile, boardingFee, luggageFee]);
           //spreadSheetApp.appendRow([method, date, transactionCode, eTicket, account, airline, airmilesAmount, saleValue, saleValuePerMile, estimatedReceiveDate, boardingFee, luggageFee]);
           spreadSheetApp.appendRow([date, airline, airmilesAmount, saleValuePerMile, saleValue, estimatedReceiveDate, transactionCode, eTicket, account, method, boardingFee, luggageFee]);
+          //spreadSheetApp.getActiveSheet().getRange(spreadSheetApp.getLastRow(), ESTIMATEDRECEIVEDATECOLUMN + 1).setNumberFormat("d/M");
+          spreadSheetApp.getActiveSheet().getRange(spreadSheetApp.getLastRow(), SALEVALUEPERMILECOLUMN + 1).setNumberFormat("R$ #,##0.00;R$ (#,##0.00)");
+          spreadSheetApp.getActiveSheet().getRange(spreadSheetApp.getLastRow(), SALEVALUE + 1).setNumberFormat("R$ #,##0.00;R$ (#,##0.00)");
           eticketsMapping[eTicket] = true;
         }
       }
