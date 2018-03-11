@@ -21,3 +21,7 @@ function formatDate(data){
     var ano = data.getFullYear();  
     return dia+"/"+mes+"/"+ano;
 }
+
+function removeLineBreaksAndSpecialChars(emailText) {
+  return emailText.replace(/\r?\n|\r/g," ").replace(/\*/g,"");
+}

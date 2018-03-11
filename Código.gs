@@ -4,19 +4,21 @@ var SALEVALUEPERMILECOLUMN = 3;
 var SALEVALUE = 4;
 
 function updateControlSpreadsheet() {
-  var spreadSheetApp, gmailThreads,firstMessageSubject, firstMessage, firstMessagePlainBody, saleWasCancelled, sucessfulSale, i,
+  var sheet, gmailThreads,firstMessageSubject, firstMessage, firstMessagePlainBody, saleWasCancelled, sucessfulSale, i,
       method, date, transactionCode, eTicket, account, airline, airmilesAmount, saleValue, saleValuePerMile, estimatedReceiveDate, boardingFee, luggageFee;
 
   method = "MaxMilhas"
   
-  spreadSheetApp = SpreadsheetApp.getActiveSpreadsheet();
-  //gmailThreads=GmailApp.getInboxThreads();
+  sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Import");
+  if (sheet == null) {
+    throw new Error("Deve haver aba 'Import' na planilha");
+  }
   
   gmailThreads = GmailApp.getUserLabelByName("Venda de milhas").getThreads();
   
   gmailThreads.reverse();
   
-  var eticketsMapping = getEticketsMapping(spreadSheetApp);
+  var eticketsMapping = getEticketsMapping(sheet);
   
   for (i in gmailThreads) {
     
@@ -24,7 +26,7 @@ function updateControlSpreadsheet() {
 
     if (firstMessageSubject.search("Venda de milhas - código: ")>-1 && firstMessageSubject.search("Re:")==-1) {
       firstMessage = gmailThreads[i].getMessages()[0];
-      firstMessagePlainBody = firstMessage.getPlainBody().replace(/\r?\n|\r/g," ").replace(/\*/g,"");
+      firstMessagePlainBody = removeLineBreaksAndSpecialChars(firstMessage.getPlainBody());
       
       saleWasCancelled = firstMessagePlainBody.indexOf("cancelamento") > -1;
       
@@ -51,12 +53,12 @@ function updateControlSpreadsheet() {
           luggageFee = getLuggageFee(firstMessagePlainBody);
           estimatedReceiveDate = Utilities.formatDate(addDays(convertStringToDate(date), 20), "America/Sao_Paulo", "dd/MM");
           
-          //spreadSheetApp.appendRow([method, date, transactionCode, eTicket, account, airline, airmilesAmount, saleValue, saleValuePerMile, boardingFee, luggageFee]);
-          //spreadSheetApp.appendRow([method, date, transactionCode, eTicket, account, airline, airmilesAmount, saleValue, saleValuePerMile, estimatedReceiveDate, boardingFee, luggageFee]);
-          spreadSheetApp.appendRow([date, airline, airmilesAmount, saleValuePerMile, saleValue, estimatedReceiveDate, transactionCode, eTicket, account, method, boardingFee, luggageFee]);
-          //spreadSheetApp.getActiveSheet().getRange(spreadSheetApp.getLastRow(), ESTIMATEDRECEIVEDATECOLUMN + 1).setNumberFormat("d/M");
-          spreadSheetApp.getActiveSheet().getRange(spreadSheetApp.getLastRow(), SALEVALUEPERMILECOLUMN + 1).setNumberFormat("R$ #,##0.00;R$ (#,##0.00)");
-          spreadSheetApp.getActiveSheet().getRange(spreadSheetApp.getLastRow(), SALEVALUE + 1).setNumberFormat("R$ #,##0.00;R$ (#,##0.00)");
+          //sheet.appendRow([method, date, transactionCode, eTicket, account, airline, airmilesAmount, saleValue, saleValuePerMile, boardingFee, luggageFee]);
+          //sheet.appendRow([method, date, transactionCode, eTicket, account, airline, airmilesAmount, saleValue, saleValuePerMile, estimatedReceiveDate, boardingFee, luggageFee]);
+          sheet.appendRow([date, airline, airmilesAmount, saleValuePerMile, saleValue, estimatedReceiveDate, transactionCode, eTicket, account, method, boardingFee, luggageFee]);
+          //sheet.getRange(sheet.getLastRow(), ESTIMATEDRECEIVEDATECOLUMN + 1).setNumberFormat("d/M");
+          sheet.getRange(sheet.getLastRow(), SALEVALUEPERMILECOLUMN + 1).setNumberFormat("R$ #,##0.00;R$ (#,##0.00)");
+          sheet.getRange(sheet.getLastRow(), SALEVALUE + 1).setNumberFormat("R$ #,##0.00;R$ (#,##0.00)");
           eticketsMapping[eTicket] = true;
         }
       }
@@ -64,9 +66,9 @@ function updateControlSpreadsheet() {
    }
 }
 
-function getEticketsMapping(spreadSheetApp) {
+function getEticketsMapping(sheet) {
   var map = {};
-  var data = spreadSheetApp.getDataRange().getValues(); // read all data in the sheet
+  var data = sheet.getDataRange().getValues(); // read all data in the sheet
   //Logger.log(data.length);
   //Logger.log(JSON.stringify(data));
   
