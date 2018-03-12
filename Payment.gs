@@ -56,7 +56,7 @@ function updatePaymentInfo() {
 }
 
 function getTotalPayment(messageBody){
-  var regExp = new RegExp("Valor da transferência total: R\\$ ([\\d,]*)\\.\\s+Dependendo de seu", "gi");
+  var regExp = new RegExp("Valor da transferência total: R\\$ ([\\d,\\.]*)\\.\\s+Dependendo de seu", "gi");
   var result = regExp.exec(messageBody);
   if (result == null) {
     return null;
