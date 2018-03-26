@@ -25,3 +25,34 @@ function formatDate(data){
 function removeLineBreaksAndSpecialChars(emailText) {
   return emailText.replace(/\r?\n|\r/g," ").replace(/\*/g,"");
 }
+
+function getNamedRangeFast(namedRanges, name) {
+  for(var i = 0; i<namedRanges.length; i++) {
+    var namedRange = namedRanges[i];
+    if (namedRange.getName() == name) {
+      return namedRange.getRange();
+    }
+  }
+}
+
+function getStartDateFilterIfPresent(range) {
+  try {
+    var startDate = new Date(getNamedRangeFast(range, "StartDate").getValue());
+    
+    var startDateFilter = "after:" + startDate.toISOString().slice(0, 10);
+    return startDateFilter;
+  } catch (err) {}
+  return "";
+}
+
+
+String.prototype.replaceAll = function(search, replacement) {
+    var target = this;
+    return target.replace(new RegExp(escapeRegExp(search), 'g'), replacement);
+};
+
+Date.prototype.addDays = function(days) {
+  var dat = new Date(this.valueOf());
+  dat.setDate(dat.getDate() + days);
+  return dat;
+}

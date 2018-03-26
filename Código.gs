@@ -8,20 +8,35 @@ function updateControlSpreadsheet() {
       method, date, transactionCode, eTicket, account, airline, airmilesAmount, saleValue, saleValuePerMile, estimatedReceiveDate, boardingFee, luggageFee;
 
   method = "MaxMilhas"
-  
   sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Import");
   if (sheet == null) {
-    throw new Error("Deve haver aba 'Import' na planilha");
+    throw new Error("There must be an 'Import' tab on the spreadsheet");
+  }
+  var namedRanges = sheet.getNamedRanges();
+  var rangeStatus = getNamedRangeFast(namedRanges, "Status");
+
+  var startDateFilter = getStartDateFilterIfPresent(namedRanges);
+  
+  if (rangeStatus != null) {
+    rangeStatus.setValue("Getting Gmail threads...");
+    rangeStatus.setBackground("#f9cb9c");
   }
   
-  gmailThreads = GmailApp.getUserLabelByName("Venda de milhas").getThreads();
-  
+  gmailThreads = GmailApp.search(startDateFilter + " label:\"Venda de milhas\"");
   gmailThreads.reverse();
+
+  if (rangeStatus != null) {
+    rangeStatus.setValue("Getting tickets mapping from sheet...");
+  }
   
   var eticketsMapping = getEticketsMapping(sheet);
   
+  if (rangeStatus != null) {
+    rangeStatus.setValue("Processing " + gmailThreads.length + " gmail threads...");
+    SpreadsheetApp.flush();
+  }
+
   for (i in gmailThreads) {
-    
     firstMessageSubject = gmailThreads[i].getFirstMessageSubject();
 
     if (firstMessageSubject.search("Venda de milhas - código: ")>-1 && firstMessageSubject.search("Re:")==-1) {
@@ -40,11 +55,6 @@ function updateControlSpreadsheet() {
           date = getDate(firstMessagePlainBody);
           transactionCode = splittedSubject[1].replace("código: ","").trim()
           account = getAccount(firstMessagePlainBody);
-          if (account == "Ana") {
-      //Logger.log(firstMessagePlainBody);
-//      return;
-//            Logger.log('a');
-          }
           airline = getAirline(firstMessagePlainBody);
           airmilesAmount = getAirmilesAmount(firstMessagePlainBody);
           saleValue = getSaleValue(firstMessagePlainBody);
@@ -53,10 +63,7 @@ function updateControlSpreadsheet() {
           luggageFee = getLuggageFee(firstMessagePlainBody);
           estimatedReceiveDate = Utilities.formatDate(addDays(convertStringToDate(date), 20), "America/Sao_Paulo", "dd/MM");
           
-          //sheet.appendRow([method, date, transactionCode, eTicket, account, airline, airmilesAmount, saleValue, saleValuePerMile, boardingFee, luggageFee]);
-          //sheet.appendRow([method, date, transactionCode, eTicket, account, airline, airmilesAmount, saleValue, saleValuePerMile, estimatedReceiveDate, boardingFee, luggageFee]);
           sheet.appendRow([date, airline, airmilesAmount, saleValuePerMile, saleValue, estimatedReceiveDate, transactionCode, eTicket, account, method, boardingFee, luggageFee]);
-          //sheet.getRange(sheet.getLastRow(), ESTIMATEDRECEIVEDATECOLUMN + 1).setNumberFormat("d/M");
           sheet.getRange(sheet.getLastRow(), SALEVALUEPERMILECOLUMN + 1).setNumberFormat("R$ #,##0.00;R$ (#,##0.00)");
           sheet.getRange(sheet.getLastRow(), SALEVALUE + 1).setNumberFormat("R$ #,##0.00;R$ (#,##0.00)");
           eticketsMapping[eTicket] = true;
@@ -64,13 +71,24 @@ function updateControlSpreadsheet() {
       }
     }
    }
+  
+  if (rangeStatus != null) {
+    rangeStatus.setValue("Concluído");
+    rangeStatus.setBackground("#d9ead3");    
+  }
+  
+  try {
+    getNamedRangeFast(namedRanges, "StartDate").setValue((new Date()).addDays(-1));
+  } catch(err) {
+    Logger.log(err);
+  }
+  
+
 }
 
 function getEticketsMapping(sheet) {
   var map = {};
   var data = sheet.getDataRange().getValues(); // read all data in the sheet
-  //Logger.log(data.length);
-  //Logger.log(JSON.stringify(data));
   
   for(n=0;n<data.length;++n){
     map[data[n][ETICKETCOLUMN].toString()] = n + 1;
@@ -148,7 +166,6 @@ function getAirmilesAmount(messageBody){
     airmilesAmount = getSubstringInTheMiddle(messageBody, "comunicá-lo que ", " milhas* da sua oferta") 
   }
   
-  //airmilesAmount = removeAllButNumbers(airmilesAmount);
   return airmilesAmount;
 }
 
