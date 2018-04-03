@@ -28,7 +28,7 @@ function updatePaymentInfo() {
         plainBody = removeLineBreaksAndSpecialChars(message.getPlainBody());
         date = message.getDate();
         
-        var regExp = new RegExp("e-ticket: (\\w*)\\s*Voo: \\d+ Milhas: [\\d\\.]* \\(\\w*\\) Data de emissão: \\d+/\\d+/\\d+ Valor: R\\$ ([\\d,]*)", "gi"); 
+        var regExp = new RegExp("e-ticket: (\\w*)\\s*Voo: \\d+ Milhas: [\\d\\.]* \\(\\w*\\) Data de emissão: \\d+/\\d+/\\d+ Valor: R\\$ ([\\d,\\.]*)", "gi"); 
         var data;
         
         totalPayment = getTotalPayment(plainBody);
