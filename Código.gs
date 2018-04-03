@@ -78,7 +78,7 @@ function updateControlSpreadsheet() {
   }
   
   try {
-    getNamedRangeFast(namedRanges, "StartDate").setValue((new Date()).addDays(-1));
+    getNamedRangeFast(namedRanges, "StartDate").setValue((new Date()));
   } catch(err) {
     Logger.log(err);
   }
