@@ -9,12 +9,32 @@ function updatePaymentInfo() {
   method = "MaxMilhas"
   
   sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Import");
+  if (sheet == null) {
+    throw new Error("There must be an 'Import' tab on the spreadsheet");
+  }
+  var namedRanges = sheet.getNamedRanges();
+  var rangeStatus = getNamedRangeFast(namedRanges, "Status");
+
+  if (rangeStatus != null) {
+    rangeStatus.setValue("Getting Gmail threads...");
+    rangeStatus.setBackground("#f9cb9c");
+  }
+
+  var startDateFilter = getStartDateFilterIfPresent(namedRanges);
   
-  var gmailThreads = GmailApp.getUserLabelByName("Venda de milhas").getThreads();
-  
+  gmailThreads = GmailApp.search(startDateFilter + " label:\"Venda de milhas\"");
   gmailThreads.reverse();
   
+  if (rangeStatus != null) {
+    rangeStatus.setValue("Getting tickets mapping from sheet...");
+  }  
+  
   var eticketsMapping = getEticketsMapping(sheet);
+
+  if (rangeStatus != null) {
+    rangeStatus.setValue("Processing " + gmailThreads.length + " gmail threads...");
+    SpreadsheetApp.flush();
+  }
   
   for (i in gmailThreads) {
     
@@ -53,6 +73,18 @@ function updatePaymentInfo() {
     }
 
   }
+  
+  if (rangeStatus != null) {
+    rangeStatus.setValue("Concluído");
+    rangeStatus.setBackground("#d9ead3");    
+  }
+  
+  try {
+    getNamedRangeFast(namedRanges, "StartDate").setValue((new Date()));
+  } catch(err) {
+    Logger.log(err);
+  }
+  
 }
 
 function getTotalPayment(messageBody){
